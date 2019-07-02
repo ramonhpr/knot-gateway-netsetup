@@ -1,5 +1,6 @@
 import os
 from setuptools import setup, find_packages
+from setuptools.command.develop import develop
 
 # Utility function to read the README file.
 # Used for the long_description.  It's nice, because now 1) we have a top level
@@ -10,6 +11,11 @@ from setuptools import setup, find_packages
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+
+class PostInstall(develop):
+    def run(self):
+        develop.run(self)
+        os.system('pre-commit install')
 
 setup(
     name="netsetup",
@@ -27,12 +33,15 @@ setup(
             "netsetup = netsetup.__main__:main"
         ]
     },
+    cmdclass={'develop': PostInstall},
     extras_require={
         'dev': [
             'lockfile',
             'dbus-python',
             'pygobject',
-            'python-daemon'
+            'python-daemon',
+            'pylint',
+            'pre-commit'
         ]
     },
     classifiers=[

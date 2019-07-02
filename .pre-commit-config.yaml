@@ -1,0 +1,7 @@
+-   repo: local
+    hooks:
+    -   id: pep8
+        name: pep8
+        entry: pep8 .
+        language: system
+        types: [python]
