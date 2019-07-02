@@ -20,6 +20,7 @@ import daemon
 from .desktop_bus import DbusService
 from .wpantun import WpanClient
 from .ble import BleService
+from .connman import ConnmanClient
 
 mainloop = None
 
@@ -80,6 +81,10 @@ def main():
 
     with context:
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+
+        connman_inst = ConnmanClient()
+
+        connman_inst.enable_tethering()
 
         wpan_inst = WpanClient()
         ble_inst = BleService(wpan_inst, args.ad_name)
