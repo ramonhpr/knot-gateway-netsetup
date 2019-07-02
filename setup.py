@@ -32,7 +32,9 @@ setup(
             'lockfile',
             'dbus-python',
             'pygobject',
-            'python-daemon'
+            'python-daemon',
+            'pylint',
+            'pre-commit'
         ]
     },
     classifiers=[
