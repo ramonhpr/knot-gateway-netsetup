@@ -27,6 +27,14 @@ setup(
             "netsetup = netsetup.__main__:main"
         ]
     },
+    extras_require={
+        'dev': [
+            'lockfile',
+            'dbus-python',
+            'pygobject',
+            'python-daemon'
+        ]
+    },
     classifiers=[
         "Development Status :: 4 - Beta",
         "Topic :: Utilities",
