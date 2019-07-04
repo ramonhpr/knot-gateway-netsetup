@@ -208,14 +208,14 @@ class Characteristic(dbus.service.Object):
 class KnotApplication(Application):
     def __init__(self, bus):
         Application.__init__(self, bus)
-        self.add_service(KnotService(bus, 0))
+        self.add_service(OpenthreadService(bus, 0))
 
 
-class KnotService(Service):
-    KNOT_UUID = "a8a9e49c-aa9a-d441-9bec-817bb4900e30"
+class OpenthreadService(Service):
+    OT_UUID = "a8a9e49c-aa9a-d441-9bec-817bb4900e30"
 
     def __init__(self, bus, index):
-        Service.__init__(self, bus, index, self.KNOT_UUID, True)
+        Service.__init__(self, bus, index, self.OT_UUID, True)
         self.add_characteristic(OpenthreadChannelCharacteristic(bus, 0, self))
         self.add_characteristic(OpenthreadNameCharacteristic(bus, 1, self))
         self.add_characteristic(OpenthreadPanIDCharacteristic(bus, 2, self))
