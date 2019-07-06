@@ -6,7 +6,7 @@ CONNMAN_SERVICE_NAME = 'net.connman'
 CONNMAN_MANAGER_INTERFACE = '%s.Manager' %CONNMAN_SERVICE_NAME
 CONNMAN_TECHNOLOGY_INTERFACE = '%s.Technology' %CONNMAN_SERVICE_NAME
 
-DEFAULT_SSID = 'knot_gw'
+SSID_PREFIX = 'knot_gw'
 DEFAULT_PSW = 'knotNetworkOfThings'
 
 class ConnmanClient(object):
@@ -40,6 +40,23 @@ class ConnmanClient(object):
                 if properties.get('Type') == 'wifi':
                         return obj_path
 
+    def __get_ethernet_service_properties(self):
+        if not self.manager:
+            logging.error('%s: unable to get ethernet technology. Connman is not running')
+            return
+
+        for obj_path, properties in self.manager.GetServices():
+                if properties.get('Type') == 'ethernet':
+                        return properties
+
+    def __parse_mac_address(self, mac):
+        return mac.replace(':', '_')
+
+    def __get_mac_address(self):
+        properties_ethernet = self.__get_ethernet_service_properties()
+        mac = properties_ethernet.get('Ethernet').get('Address')
+        return self.__parse_mac_address(mac)
+
     def enable_tethering(self):
         path = self.__get_wifi_technology_path()
 
@@ -51,15 +68,17 @@ class ConnmanClient(object):
             self.bus.get_object(CONNMAN_SERVICE_NAME, path),
                            CONNMAN_TECHNOLOGY_INTERFACE)
 
+        mac = self.__get_mac_address()
+        ssid = '%s_%s' %(SSID_PREFIX, mac)
+
         self.__enable_wifi(wifi_tech)
         try:
                 wifi_tech.SetProperty('TetheringIdentifier',
-                                      dbus.String(DEFAULT_SSID))
+                                      dbus.String(ssid))
                 wifi_tech.SetProperty('TetheringPassphrase',
                                       dbus.String(DEFAULT_PSW))
-                wifi_tech.SetProperty('Tethering', dbus.Boolean(1))
-                logging.info('Tethering enabled: SSID %s PSW: %s', DEFAULT_SSID,
-                             DEFAULT_PSW)
+                wifi_tech.SetProperty('Tethering', dbus.Boolean(True))
+                logging.info('Tethering enabled: SSID %s PSW: %s', ssid,                     DEFAULT_PSW)
         except DBusException as err:
                 logging.error('DBus error')
                 logging.error(err)
