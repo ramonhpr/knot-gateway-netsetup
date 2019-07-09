@@ -51,6 +51,14 @@ def register_gatt_error_cb(error):
     mainloop.quit()
 
 
+def has_service_connected(services):
+    for service in services:
+            state = service.get('State')
+            if state == 'ready' or state == 'online':
+                return True
+    return False
+
+
 def main():
     global mainloop
 
@@ -84,7 +92,17 @@ def main():
 
         connman_inst = ConnmanClient()
 
-        connman_inst.enable_tethering()
+        services = connman_inst.get_wifi_services()
+
+        if not services:
+            def on_scanned(scanned_services):
+                services = scanned_services
+                if not has_service_connected(services):
+                    connman_inst.enable_tethering()
+            connman_inst.scan_wifi(on_scanned)
+
+        if not has_service_connected(services):
+            connman_inst.enable_tethering()
 
         wpan_inst = WpanClient()
         ble_inst = BleService(wpan_inst, args.ad_name)
