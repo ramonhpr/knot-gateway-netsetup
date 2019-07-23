@@ -18,11 +18,11 @@ OPENTHREAD_IFACE = 'br.org.cesar.knot.netsetup.Openthread'
 
 
 class FailedException(dbus.exceptions.DBusException):
-    _dbus_error_name = 'br.org.cesar.knot.netsetup.Openthread.Error.Failed'
+    _dbus_error_name = '%s.Error.Failed' % OPENTHREAD_IFACE
 
 
 class NotSupportedException(dbus.exceptions.DBusException):
-    _dbus_error_name = 'br.org.cesar.knot.netsetup.Openthread.Error.NotSupported'
+    _dbus_error_name = '%s.Error.NotSupported' % OPENTHREAD_IFACE
 
 
 class OpenthreadBus(dbus.service.Object):
