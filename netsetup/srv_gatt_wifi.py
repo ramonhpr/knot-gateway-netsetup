@@ -31,13 +31,20 @@ class WifiService(Service):
     def __init__(self, bus, index):
         Service.__init__(self, bus, index, self.UUID, True)
         self.add_characteristic(SSIDCharacteristic(bus, 0, self))
+        self.add_characteristic(PSWDCharacteristic(bus, 1, self))
 
         self.ssid_signal = self.__monitor_characteristic_changed(
             0, self.__on_ssid_changed)
+        self.password_signal = self.__monitor_characteristic_changed(
+            1, self.__on_password_changed)
 
     def __on_ssid_changed(self, interface, changed, invalidated):
         self.ssid = changed['Value']
         logging.info('SSID changed to %s' % convert_array_to_str(self.ssid))
+
+    def __on_password_changed(self, interface, changed, invalidated):
+        self.password = changed['Value']
+        logging.info('Password changed')
 
 
 class SSIDCharacteristic(Characteristic):
@@ -51,3 +58,12 @@ class SSIDCharacteristic(Characteristic):
     def ReadValue(self, options):
         logging.info('WiFi SSID: %s' % convert_array_to_str(self.value))
         return self.value
+
+
+class PSWDCharacteristic(Characteristic):
+    PSWD_UUID = "a8a9e49c-aa9a-d441-9bec-817bb4900d42"
+
+    def __init__(self, bus, index, service):
+        Characteristic.__init__(self, bus, index, self.PSWD_UUID,
+                                ["write"], service)
+        self.value = []
