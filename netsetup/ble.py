@@ -12,6 +12,7 @@ import dbus
 from dbus.service import method as dbus_method
 
 from srv_gatt_ot import OpenthreadService
+from srv_gatt_wifi import WifiService
 from ble_util.advertisement import Advertisement
 from ble_util.application import Application
 from ble_util.errors import InvalidArgsException
@@ -31,6 +32,7 @@ class KnotApplication(Application):
         global wpantun
         Application.__init__(self, bus)
         self.add_service(OpenthreadService(bus, 0, wpantun))
+        self.add_service(WifiService(bus, 1))
 
 
 class KnotAdvertisement(Advertisement):
