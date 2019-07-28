@@ -8,6 +8,7 @@ import dbus
 import logging
 from dbus.service import method as dbus_method
 from errors import InvalidArgsException, NotSupportedException
+from errors import InvalidValueLengthException
 from constants.dbus_interfaces import GATT_CHRC_IFACE
 
 
@@ -67,8 +68,13 @@ class Characteristic(dbus.service.Object):
 
     @dbus_method(GATT_CHRC_IFACE, in_signature='aya{sv}')
     def WriteValue(self, value, options):
-        logging.info('Default WriteValue called, returning error')
-        raise NotSupportedException()
+        if 'write' not in self.flags:
+            raise NotSupportedException()
+        if not value:
+            logging.error('No value received')
+            raise InvalidValueLengthException()
+        self.value = value
+        self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
 
     @dbus_method(GATT_CHRC_IFACE)
     def StartNotify(self):
