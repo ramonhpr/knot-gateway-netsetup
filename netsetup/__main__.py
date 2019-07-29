@@ -19,6 +19,7 @@ import gobject as GObject
 import daemon
 from .desktop_bus import DbusService
 from .wpantun import WpanClient
+from .connman import ConnmanClient
 from .ble import BleService
 
 mainloop = None
@@ -82,7 +83,8 @@ def main():
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
         wpan_inst = WpanClient()
-        ble_inst = BleService(wpan_inst, args.ad_name)
+        connman_inst = ConnmanClient()
+        ble_inst = BleService(wpan_inst, connman_inst, args.ad_name)
         dbus_inst = DbusService(wpan_inst)
 
         mainloop = GObject.MainLoop()
