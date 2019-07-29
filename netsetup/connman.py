@@ -11,6 +11,7 @@ from dbus.exceptions import DBusException
 CONNMAN_SERVICE_NAME = 'net.connman'
 CONNMAN_MANAGER_INTERFACE = '%s.Manager' % CONNMAN_SERVICE_NAME
 CONNMAN_TECHNOLOGY_INTERFACE = '%s.Technology' % CONNMAN_SERVICE_NAME
+CONNMAN_SERVICE_INTERFACE = '%s.Service' % CONNMAN_SERVICE_NAME
 CONNMAN_AGENT_INTERFACE = '%s.Agent' % CONNMAN_SERVICE_NAME
 
 WIFI_AGENT_PATH = '/knot/netsetup/wifi/agent'
@@ -110,3 +111,37 @@ class ConnmanClient(object):
 
         wifi_tech.Scan(reply_handler=lambda: logging.info('Scan complete'),
                        error_handler=lambda err: logging.error(err))
+
+    def __get_wifi_service(self, name):
+        if not self.manager:
+            logging.error('Unable to get wifi technology. Connman not running')
+            return
+
+        for obj_path, properties in self.manager.GetServices():
+                if properties.get('Name') == name:
+                        break
+
+        if properties.get('Name') != name:
+            logging.error('Not found service %s' % name)
+            return
+
+        service = dbus.Interface(
+            self.bus.get_object(CONNMAN_SERVICE_NAME, obj_path),
+            CONNMAN_SERVICE_INTERFACE)
+        
+        return service
+
+    def __do_connect(self, name):
+        service = self.__get_wifi_service(name)
+        if not service:
+            logging.error('Not found service')
+            return
+
+        service.Connect(reply_handler=lambda: logging.info('Connected'),
+                        error_handler=lambda err: logging.error(err))
+
+    def scan_and_connect_wifi(self, name, password):
+        self.agent.name = name
+        self.agent.passphrase = password
+
+        self.__scan_wifi(lambda services: self.__do_connect(name))
