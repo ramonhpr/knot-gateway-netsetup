@@ -10,6 +10,7 @@ from dbus.exceptions import DBusException
 
 CONNMAN_SERVICE_NAME = 'net.connman'
 CONNMAN_MANAGER_INTERFACE = '%s.Manager' % CONNMAN_SERVICE_NAME
+CONNMAN_TECHNOLOGY_INTERFACE = '%s.Technology' % CONNMAN_SERVICE_NAME
 CONNMAN_AGENT_INTERFACE = '%s.Agent' % CONNMAN_SERVICE_NAME
 
 WIFI_AGENT_PATH = '/knot/netsetup/wifi/agent'
@@ -54,3 +55,44 @@ class ConnmanClient(object):
         self.manager = self.__get_manager_interface()
         self.agent = WifiAgent(self.bus, WIFI_AGENT_PATH)
         self.manager.RegisterAgent(WIFI_AGENT_PATH)
+
+    def __enable_wifi(self, iface):
+        properties = iface.GetProperties()
+        if not properties.get('Powered'):
+            iface.SetProperty('Powered', dbus.Boolean(True))
+            logging.info('Wifi enabled')
+
+    def __get_wifi_technology_path(self):
+        if not self.manager:
+            logging.error('Unable to get wifi technology. Connman not running')
+            return
+
+        for obj_path, properties in self.manager.GetTechnologies():
+                if properties.get('Type') == 'wifi':
+                        return obj_path
+
+    def __scan_wifi(self, on_scan_completed):
+        if not self.manager:
+            logging.error('Unable to connect to wifi service')
+            return []
+        path = self.__get_wifi_technology_path()
+        services = []
+
+        if not path:
+            logging.error('Not found technology wifi')
+            return
+
+        wifi_tech = dbus.Interface(
+            self.bus.get_object(CONNMAN_SERVICE_NAME, path),
+            CONNMAN_TECHNOLOGY_INTERFACE)
+
+        self.__enable_wifi(wifi_tech)
+
+        def on_services_changed(currentServices, rmServices):
+            self.signal_match.remove()
+            on_scan_completed(currentServices)
+        self.signal_match = self.manager.connect_to_signal(
+            'ServicesChanged', on_services_changed)
+
+        wifi_tech.Scan(reply_handler=lambda: logging.info('Scan complete'),
+                       error_handler=lambda err: logging.error(err))
