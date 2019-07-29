@@ -29,11 +29,10 @@ ADVERTISEMENT_TOGGLE_MS = 500
 
 
 class KnotApplication(Application):
-    def __init__(self, bus):
-        global wpantun
+    def __init__(self, bus, wpantun, connman):
         Application.__init__(self, bus)
         self.add_service(OpenthreadService(bus, 0, wpantun))
-        self.add_service(WifiService(bus, 1))
+        self.add_service(WifiService(bus, 1, connman))
 
 
 class KnotAdvertisement(Advertisement):
@@ -65,11 +64,9 @@ class BleService(object):
     gatt_manager = None
     gatt_knot = None
 
-    def __init__(self, wpan, ad_name):
-        global wpantun
+    def __init__(self, wpantun, connman, ad_name):
 
         self.bus = dbus.SystemBus()
-        wpantun = wpan
 
         self.ad_adapter = find_adapter(self.bus, LE_ADVERTISING_MANAGER_IFACE)
         if not self.ad_adapter:
@@ -87,7 +84,7 @@ class BleService(object):
                                 self.ad_adapter),
             LE_ADVERTISING_MANAGER_IFACE)
 
-        self.gatt_knot = KnotApplication(self.bus)
+        self.gatt_knot = KnotApplication(self.bus, wpantun, connman)
 
         self.ad_knot = KnotAdvertisement(self.bus, 0, self.gatt_knot, ad_name)
 

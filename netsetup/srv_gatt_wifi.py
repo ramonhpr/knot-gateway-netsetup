@@ -28,8 +28,9 @@ class WifiService(Service):
                 handler_function=on_changed,
                 signal_name='PropertiesChanged')
 
-    def __init__(self, bus, index):
+    def __init__(self, bus, index, connman):
         Service.__init__(self, bus, index, self.UUID, True)
+        self.connman = connman
         self.add_characteristic(SSIDCharacteristic(bus, 0, self))
         self.add_characteristic(PSWDCharacteristic(bus, 1, self))
 
@@ -41,10 +42,16 @@ class WifiService(Service):
     def __on_ssid_changed(self, interface, changed, invalidated):
         self.ssid = changed['Value']
         logging.info('SSID changed to %s' % convert_array_to_str(self.ssid))
+        if 'password' in self.__dict__:
+            self.connman.scan_and_connect_wifi(convert_array_to_str(self.ssid),
+                                      convert_array_to_str(self.password))
 
     def __on_password_changed(self, interface, changed, invalidated):
         self.password = changed['Value']
         logging.info('Password changed')
+        if 'ssid' in self.__dict__:
+            self.connman.scan_and_connect_wifi(convert_array_to_str(self.ssid),
+                                      convert_array_to_str(self.password))
 
 
 class SSIDCharacteristic(Characteristic):
