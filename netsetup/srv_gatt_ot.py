@@ -14,10 +14,10 @@ from ble_util.characteristic import Characteristic
 
 
 class OpenthreadService(Service):
-    OT_UUID = "a8a9e49c-aa9a-d441-9bec-817bb4900e30"
+    UUID = "a8a9e49c-aa9a-d441-9bec-817bb4900e30"
 
     def __init__(self, bus, index, wpantun):
-        Service.__init__(self, bus, index, self.OT_UUID, True)
+        Service.__init__(self, bus, index, self.UUID, True)
         self.add_characteristic(OpenthreadChannelCharacteristic(bus, 0, self,
                                 wpantun))
         self.add_characteristic(OpenthreadNameCharacteristic(bus, 1, self,
