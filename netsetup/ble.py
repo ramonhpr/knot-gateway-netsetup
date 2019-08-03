@@ -9,6 +9,7 @@ import sys
 import struct
 import logging
 import dbus
+import gobject
 from dbus.service import method as dbus_method
 
 from srv_gatt_ot import OpenthreadService
@@ -25,6 +26,8 @@ logging.basicConfig(format='[%(levelname)s] %(funcName)s: %(message)s\n',
                     stream=sys.stderr, level=logging.INFO)
 
 wpantun = None
+
+ADVERTISEMENT_TOOGLE_MS = 500
 
 
 class KnotApplication(Application):
@@ -43,6 +46,13 @@ class KnotAdvertisement(Advertisement):
         self.current_srv_gatt = 0
         self.add_local_name(ad_name)
         self.include_tx_power = True
+
+    def toogle_uuid(self):
+        qtd_srv = len(self.gatt_knot.services)
+        self.current_srv_gatt = (self.current_srv_gatt + 1) % qtd_srv
+        uuid = self.gatt_knot.services[self.current_srv_gatt].UUID
+        self.service_uuids = []
+        self.add_service_uuid(uuid)
 
 
 class BleService(object):
@@ -90,6 +100,41 @@ class BleService(object):
         self.gatt_manager = dbus.Interface(
             self.bus.get_object(BLUEZ_SERVICE_NAME, self.gatt_adapter),
             GATT_MANAGER_IFACE)
+
+    def __toogle_advertisement(self, on_error):
+        self.ad_manager.UnregisterAdvertisement(
+            self.ad_knot,
+            reply_handler=lambda: None,
+            error_handler=on_error)
+        self.ad_knot.toogle_uuid()
+        self.ad_manager.RegisterAdvertisement(
+            self.ad_knot.get_path(), {},
+            reply_handler=lambda: None,
+            error_handler=on_error)
+        return True  # return True to keep triggering timeout
+
+    def register_advertisement(self, on_registered, on_error):
+        def __on_register_ad():
+            gobject.timeout_add(ADVERTISEMENT_TOOGLE_MS,
+                                self.__toogle_advertisement, on_error)
+            on_registered()
+
+        self.ad_manager.RegisterAdvertisement(
+            self.ad_knot.get_path(), {},
+            reply_handler=__on_register_ad,
+            error_handler=on_error)
+
+    def register_gatt_app(self, on_registered, on_error):
+        self.gatt_manager.RegisterApplication(
+            self.gatt_knot.get_path(), {},
+            reply_handler=on_registered,
+            error_handler=on_error)
+
+    def unregister_advertisement(self):
+        self.ad_manager.UnregisterAdvertisement(self.ad_knot)
+
+    def unregister_gatt_app(self):
+        self.gatt_manager.UnregisterApplication(self.gatt_knot)
 
 
 def find_adapter(bus, iface):
