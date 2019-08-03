@@ -34,9 +34,11 @@ class KnotApplication(Application):
 
 
 class KnotAdvertisement(Advertisement):
-    def __init__(self, bus, index, ad_name):
+    def __init__(self, bus, index, gatt_knot, ad_name):
         Advertisement.__init__(self, bus, index, 'peripheral')
-        self.add_service_uuid("a8a9e49c-aa9a-d441-9bec-817bb4900e30")
+        self.gatt_knot = gatt_knot
+        self.add_service_uuid(gatt_knot.services[0].UUID)
+        self.current_srv_gatt = 0
         self.add_local_name(ad_name)
         self.include_tx_power = True
 
@@ -75,7 +77,9 @@ class BleService(object):
                                 self.ad_adapter),
             LE_ADVERTISING_MANAGER_IFACE)
 
-        self.ad_knot = KnotAdvertisement(self.bus, 0, ad_name)
+        self.gatt_knot = KnotApplication(self.bus)
+
+        self.ad_knot = KnotAdvertisement(self.bus, 0, self.gatt_knot, ad_name)
 
         self.gatt_adapter = find_adapter(self.bus, GATT_MANAGER_IFACE)
         if not self.gatt_adapter:
@@ -84,8 +88,6 @@ class BleService(object):
         self.gatt_manager = dbus.Interface(
             self.bus.get_object(BLUEZ_SERVICE_NAME, self.gatt_adapter),
             GATT_MANAGER_IFACE)
-
-        self.gatt_knot = KnotApplication(self.bus)
 
 
 def find_adapter(bus, iface):
