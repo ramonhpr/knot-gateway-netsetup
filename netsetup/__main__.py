@@ -87,20 +87,16 @@ def main():
 
         mainloop = GObject.MainLoop()
 
-        ble_inst.ad_manager.RegisterAdvertisement(
-            ble_inst.ad_knot.get_path(), {},
-            reply_handler=register_ad_reply_cb,
-            error_handler=register_ad_error_cb)
+        ble_inst.register_advertisement(register_ad_reply_cb,
+                                        register_ad_error_cb)
 
-        ble_inst.gatt_manager.RegisterApplication(
-            ble_inst.gatt_knot.get_path(), {},
-            reply_handler=register_gatt_reply_cb,
-            error_handler=register_gatt_error_cb)
+        ble_inst.register_gatt_app(register_gatt_reply_cb,
+                                   register_gatt_error_cb)
 
         mainloop.run()
 
-        ble_inst.gatt_manager.UnregisterApplication(ble_inst.gatt_knot)
-        ble_inst.ad_manager.UnregisterAdvertisement(ble_inst.ad_knot)
+        ble_inst.unregister_advertisement()
+        ble_inst.unregister_gatt_app()
         dbus.service.Object.remove_from_connection(ble_inst.gatt_knot)
         dbus.service.Object.remove_from_connection(ble_inst.ad_knot)
 
